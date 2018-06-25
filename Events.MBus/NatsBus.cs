@@ -13,6 +13,16 @@ namespace Events.MBus
         void SubscribeAsync<T>(Action<T> callback);
         void Publish<T>(T t);
         void PublishAsync<T>(T t);
+
+        event OnDisconnectedHandler OnDisconnected;
+
+
+    }
+
+    public delegate void OnDisconnectedHandler(object sender, OnDisconnectedHandlerArgs args);
+
+    public class OnDisconnectedHandlerArgs
+    {
     }
 
 
@@ -64,6 +74,8 @@ namespace Events.MBus
             }
         }
 
+        public event OnDisconnectedHandler OnDisconnected;
+
 
         public void Setup()
         {
@@ -74,6 +86,11 @@ namespace Events.MBus
             // Creates a live connection to the default
             // NATS Server running locally
             IConnection c = cf.CreateConnection();
+
+            c.Opts.DisconnectedEventHandler += (sender, args) =>
+            {
+                OnDisconnected?.Invoke(sender, new OnDisconnectedHandlerArgs());
+            };
 
             _connection = c;
             // Setup an event handler to process incoming messages.

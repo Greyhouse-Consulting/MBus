@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using Events.MBus;
 using Events.Messages;
 
@@ -18,12 +19,16 @@ namespace Events
 
             var mbus = new NatsBus();
 
+            mbus.OnDisconnected += (sender, handlerArgs) => { Console.WriteLine("Bloody hell! Disconnected!"); };
+
             //mbus.SubscribeAsync< DoorOpenendMessage>(Callback);
 
 
             for (int i = 0; i < 10; i++)
             {
                 mbus.Publish(new DoorOpenendMessage(DoorOpenendMessage.DoorType.Front, $"FHellon! {i}"));
+
+                Thread.Sleep(1000);
             }
 
         }
