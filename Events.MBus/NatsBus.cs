@@ -6,8 +6,6 @@ using NATS.Client;
 
 namespace Events.MBus
 {
-
-
     public interface IMBus
     {
         void SubscribeAsync<T>(Action<T> callback);
@@ -15,14 +13,25 @@ namespace Events.MBus
         void PublishAsync<T>(T t);
 
         event OnDisconnectedHandler OnDisconnected;
+        event OnClosedHandler OnClosed;
+    }
 
+    public delegate void OnClosedHandler(object sender, OnClosedHandlerArgs args);
 
+    public class OnClosedHandlerArgs
+    {
     }
 
     public delegate void OnDisconnectedHandler(object sender, OnDisconnectedHandlerArgs args);
 
     public class OnDisconnectedHandlerArgs
     {
+        private ConnState State { get; }
+
+        public OnDisconnectedHandlerArgs(ConnState state)
+        {
+            State = state;
+        }
     }
 
 
@@ -75,21 +84,27 @@ namespace Events.MBus
         }
 
         public event OnDisconnectedHandler OnDisconnected;
+        public event OnClosedHandler OnClosed;
 
 
         public void Setup()
         {
             // Create a new connection factory to create
             // a connection.
-            ConnectionFactory cf = new ConnectionFactory();
+            var cf = new ConnectionFactory();
 
             // Creates a live connection to the default
             // NATS Server running locally
-            IConnection c = cf.CreateConnection();
+            var c = cf.CreateConnection();
 
             c.Opts.DisconnectedEventHandler += (sender, args) =>
             {
-                OnDisconnected?.Invoke(sender, new OnDisconnectedHandlerArgs());
+                OnDisconnected?.Invoke(this, new OnDisconnectedHandlerArgs(args.Conn.State));
+            };
+
+            c.Opts.ClosedEventHandler += (sender, args) =>
+            {
+                OnClosed?.Invoke(this, new OnClosedHandlerArgs()); 
             };
 
             _connection = c;
@@ -157,4 +172,5 @@ namespace Events.MBus
             _connection?.Dispose();
         }
     }
+
 }
