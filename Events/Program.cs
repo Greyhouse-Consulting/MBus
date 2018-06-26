@@ -26,8 +26,9 @@ namespace Events
 
             for (int i = 0; i < 10; i++)
             {
-                mbus.Publish(new DoorOpenendMessage(DoorOpenendMessage.DoorType.Front, $"FHellon! {i}"));
 
+                mbus.Publish(new DoorOpenendMessage(DoorOpenendMessage.DoorType.Front, $"FHellon! {i}"));
+                Console.WriteLine($"Publishing Message {i}");
                 Thread.Sleep(1000);
             }
 
