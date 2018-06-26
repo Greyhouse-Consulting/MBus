@@ -24,7 +24,7 @@ namespace Events
             //mbus.SubscribeAsync< DoorOpenendMessage>(Callback);
 
 
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 100; i++)
             {
 
                 mbus.Publish(new DoorOpenendMessage(DoorOpenendMessage.DoorType.Front, $"FHellon! {i}"));

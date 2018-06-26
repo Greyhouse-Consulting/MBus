@@ -20,6 +20,12 @@ namespace Events.MBus
 
     public class OnClosedHandlerArgs
     {
+        private ConnState ConnState { get; }
+
+        public OnClosedHandlerArgs(ConnState connState)
+        {
+            ConnState = connState;
+        }
     }
 
     public delegate void OnDisconnectedHandler(object sender, OnDisconnectedHandlerArgs args);
@@ -104,7 +110,7 @@ namespace Events.MBus
 
             c.Opts.ClosedEventHandler += (sender, args) =>
             {
-                OnClosed?.Invoke(this, new OnClosedHandlerArgs()); 
+                OnClosed?.Invoke(this, new OnClosedHandlerArgs(args.Conn.State)); 
             };
 
             _connection = c;
