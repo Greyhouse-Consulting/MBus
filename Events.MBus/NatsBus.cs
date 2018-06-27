@@ -10,7 +10,8 @@ namespace Events.MBus
     {
         void SubscribeAsync<T>(Action<T> callback);
         void Publish<T>(T t);
-        void PublishAsync<T>(T t);
+
+        void ReceiveAsync<T>(Action<T> callback);
 
         event OnDisconnectedHandler OnDisconnected;
         event OnClosedHandler OnClosed;
@@ -60,7 +61,7 @@ namespace Events.MBus
 
             ((Subscribers<T>)_typeSubscribers[typeof(T)]).Add(callback);
 
-            _connection.SubscribeAsync("foo", nameof(T), (sender, args) =>
+            _connection.SubscribeAsync(nameof(T), (sender, args) =>
             {
                 var t = (T)new BinaryFormatter().Deserialize(new MemoryStream(args.Message.Data));
 
@@ -75,18 +76,24 @@ namespace Events.MBus
             {
                 var binaryFormatter = new BinaryFormatter();
                 binaryFormatter.Serialize(memoryStream, t);
-                _connection.Publish("foo", memoryStream.GetBuffer());
+                _connection.Publish(nameof(T), memoryStream.GetBuffer());
             }
         }
 
-        public void PublishAsync<T>(T t)
+        public void ReceiveAsync<T>(Action<T> callback)
         {
-            using (var memoryStream = new MemoryStream())
+            if (!_typeSubscribers.ContainsKey(typeof(T)))
+                _typeSubscribers.Add(typeof(T), new Subscribers<T>());
+
+            ((Subscribers<T>)_typeSubscribers[typeof(T)]).Add(callback);
+
+            _connection.SubscribeAsync(nameof(T), nameof(T), (sender, args) =>
             {
-                var binaryFormatter = new BinaryFormatter();
-                binaryFormatter.Serialize(memoryStream, t);
-                _connection.Publish("foo", memoryStream.GetBuffer());
-            }
+                var t = (T)new BinaryFormatter().Deserialize(new MemoryStream(args.Message.Data));
+
+                foreach (var subscriberCallback in (Subscribers<T>)_typeSubscribers[typeof(T)])
+                    subscriberCallback(t);
+            });
         }
 
         public event OnDisconnectedHandler OnDisconnected;
@@ -112,6 +119,7 @@ namespace Events.MBus
             {
                 OnClosed?.Invoke(this, new OnClosedHandlerArgs(args.Conn.State)); 
             };
+
 
             _connection = c;
             // Setup an event handler to process incoming messages.
