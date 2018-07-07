@@ -17,17 +17,17 @@ namespace Events
 
             //v.Open(new FrontDoor());
 
-            var mbus = new NatsBus();
+            var mbus = new NatsBus("Sender");
 
             mbus.OnDisconnected += (sender, handlerArgs) => { Console.WriteLine("Bloody hell! Disconnected!"); };
 
-            //mbus.SubscribeAsync< DoorOpenendMessage>(Callback);
 
+            //mbus.SubscribeAsync< DoorOpenendMessage>(Callback);
 
             for (int i = 0; i < 100; i++)
             {
 
-                mbus.Publish(new DoorOpenendMessage(DoorOpenendMessage.DoorType.Front, $"FHellon! {i}"));
+                mbus.Send(new DoorOpenendMessage(DoorOpenendMessage.DoorType.Front, $"FHellon! {i}"));
                 Console.WriteLine($"Publishing Message {i}");
                 Thread.Sleep(1000);
             }
